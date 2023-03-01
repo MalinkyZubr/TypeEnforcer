@@ -46,7 +46,7 @@ class TypeEnforcer:
         Supports basic type hinting operations, like Type[], Union[], and <Container>[<datatype>]
 
         Must also use hints for the return type, following same rules as the parameters
-        
+
         good for debugging
         """
         def inner(*args, **kwargs):
@@ -74,7 +74,7 @@ class TypeEnforcer:
             TypeEnforcer.__check_args(hints, concat_args, func)
 
             return_value = func(*args, **kwargs)
-            if type(return_value) != return_type and return_type not in typing.get_args(return_type) and return_type != typing.Any:
+            if 'return' in hints and type(return_value) != return_type and return_type not in typing.get_args(return_type) and return_type != typing.Any:
                 raise exc.WrongReturnType(return_type, type(return_value))
             return return_value
         return inner
