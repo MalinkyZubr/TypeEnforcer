@@ -40,11 +40,13 @@ class TypeEnforcer:
     def enforcer(func: typing.Callable):
         """
         add as a decorator to any python function 
-        
+
         Enforces python type hints. 
         Ensure that all of the function parameters have type hints! Even if it is just typing.Any
         Supports basic type hinting operations, like Type[], Union[], and <Container>[<datatype>]
 
+        Must also use hints for the return type, following same rules as the parameters
+        
         good for debugging
         """
         def inner(*args, **kwargs):
