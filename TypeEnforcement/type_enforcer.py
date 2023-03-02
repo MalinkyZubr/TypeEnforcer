@@ -52,11 +52,15 @@ class TypeEnforcer:
         def inner(*args, **kwargs):
             hints = typing.get_type_hints(func)
 
-            concat_args = TypeEnforcer.__combine_args_kwargs(args, kwargs, hints)
+            print(func.__code__.co_varnames)
 
-            defaults: dict = []
-            return_type = hints['return']
-            hints.pop('return')
+            concat_args = TypeEnforcer.__combine_args_kwargs(args, kwargs, hints)
+            defaults: list = []
+            if 'return' in hints.keys():
+                return_type = hints['return']
+                hints.pop('return')
+            else: 
+                return_type = typing.Any
 
             for key in hints.keys():
                 if type(hints[key]) == types.GenericAlias:
@@ -88,7 +92,7 @@ if __name__ == "__main__":
         pass
 
     @TypeEnforcer.enforcer
-    def foo(n: typing.Type[Silly], f: list[str], x: typing.Any, y: str, z: bool | None=True, a: str="hello") -> bool:
+    def foo(n, f: list[str], x: typing.Any, y: str, z: bool | None=True, a: str="hello"):
         return True
 
     x = foo(Doof(), ['r'], 1, "hi", z=None, a="yo")
