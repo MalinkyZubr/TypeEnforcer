@@ -10,7 +10,7 @@ except:
 
 class TypeEnforcer:
     @staticmethod
-    def __check_args(hints: dict, args: tuple, func: typing.Callable):
+    def __check_args(hints: dict, args: tuple, func: typing.Callable) -> None:
         for argument_name, argument in args.items():
             received_type = type(argument)
             expected_type = hints[argument_name]
@@ -26,15 +26,28 @@ class TypeEnforcer:
                 raise exc.WrongParameterType(func.__name__,argument_name,received_type,expected_type)
 
     @staticmethod
-    def __combine_args_kwargs(args: tuple, kwargs: dict, hints: dict):
+    def __combine_args_kwargs(args: tuple, kwargs: dict, func: typing.Callable) -> dict:
         args_limit = len(args)
         args_dict: dict = {}
-        for index, item in list(enumerate(hints.items()))[:args_limit]:
-            key, value = item
-            args_dict.update({key:args[index]})
+        for index, arg_name in list(enumerate(func.__code__.co_varnames))[:args_limit]:
+            args_dict.update({arg_name:args[index]})
         args_dict.update(kwargs)
 
+        print(args_dict)
         return args_dict
+    
+    @staticmethod
+    def __generate_hints_dict(args: dict, func: typing.Callable) -> dict:
+        incomplete_hints = typing.get_type_hints(func)
+        complete_hints: dict = dict()
+        
+        for arg_name in args.keys():
+            try:
+                complete_hints.update({arg_name:incomplete_hints[arg_name]})
+            except KeyError:
+                complete_hints.update({arg_name:typing.Any})
+        
+        return complete_hints
 
     @staticmethod
     def enforcer(func: typing.Callable):
@@ -50,11 +63,8 @@ class TypeEnforcer:
         good for debugging
         """
         def inner(*args, **kwargs):
-            hints = typing.get_type_hints(func)
-
-            print(func.__code__.co_varnames)
-
-            concat_args = TypeEnforcer.__combine_args_kwargs(args, kwargs, hints)
+            concat_args = TypeEnforcer.__combine_args_kwargs(args, kwargs, func)
+            hints = TypeEnforcer.__generate_hints_dict(concat_args, func)
             defaults: list = []
             if 'return' in hints.keys():
                 return_type = hints['return']
@@ -95,5 +105,5 @@ if __name__ == "__main__":
     def foo(n, f: list[str], x: typing.Any, y: str, z: bool | None=True, a: str="hello"):
         return True
 
-    x = foo(Doof(), ['r'], 1, "hi", z=None, a="yo")
+    x = foo(Doof(), ['r'], 1, "hi", z=None)
     print(x)
