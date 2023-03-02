@@ -55,7 +55,7 @@ class TypeEnforcer:
         add as a decorator to any python function 
 
         Enforces python type hints. 
-        Ensure that all of the function parameters have type hints! Even if it is just typing.Any
+        Parameters and returns that do not have explicit hints will be assumed to have types of typing.Any
         Supports basic type hinting operations, like Type[], Union[], and <Container>[<datatype>]
 
         Must also use hints for the return type, following same rules as the parameters
@@ -102,8 +102,14 @@ if __name__ == "__main__":
         pass
 
     @TypeEnforcer.enforcer
-    def foo(n, f: list[str], x: typing.Any, y: str, z: bool | None=True, a: str="hello"):
+    def foo(n, v: typing.Callable, f: list[str], x: typing.Any, y: str, z: bool | None=True, a: str="hello", ):
         return True
 
-    x = foo(Doof(), ['r'], 1, "hi", z=None)
+    def zoo():
+        pass
+
+    x = foo(Doof(), zoo, ['r'], 1, "hi", z=None)
     print(x)
+
+    print(type(foo))
+    print(type(typing.Callable))
