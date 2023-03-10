@@ -143,5 +143,5 @@ if __name__ == "__main__":
     def zoo():
         pass
 
-    x = foo(Doof(), "{"x":1}", zoo, ['r', 'r'], 1, "hi", z=True)
+    x = foo(Doof(), {"x":1} , zoo, ['r', 'r'], 1, "hi", z=True)
     print(x)
