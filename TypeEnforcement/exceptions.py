@@ -5,6 +5,7 @@ class WrongParameterType(TypeError):
     def __init__(self, function_name: str, parameter_name: str, received_type: str, expected_type: str):
         message = f"Function received the incorrect type {received_type} for the parameter {parameter_name} in the function {function_name}. Expected type {expected_type}"
         super().__init__(message)
+        
 
 class WrongReturnType(TypeError):
     """
