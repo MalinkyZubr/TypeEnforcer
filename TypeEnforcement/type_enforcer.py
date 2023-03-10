@@ -36,7 +36,6 @@ class TypeEnforcer:
             args_dict.update({arg_name:args[index]})
         args_dict.update(kwargs)
 
-        print(args_dict)
         return args_dict
     
     @staticmethod
@@ -55,14 +54,11 @@ class TypeEnforcer:
     @staticmethod
     def __generic_alias_checker(data_type: types.GenericAlias, data: typing.Any, parent_variable_name: str, func_name: str, is_return: bool=False):
         if type(data_type) == types.GenericAlias:
-            print(data_type.__origin__)
-            print(data_type.__args__)
             if type(data) != data_type.__origin__:
                 if is_return:
                     raise exc.WrongReturnType(data_type, type(data))
                 else:
                     raise exc.WrongParameterType(func_name, parent_variable_name, data_type, data)
-            print(data_type.__args__)
             if isinstance(data, typing.Iterable) and not isinstance(data, str):
                 for item in data:
                     TypeEnforcer.__generic_alias_checker(data_type.__args__[0], item, parent_variable_name, func_name)
