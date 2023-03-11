@@ -65,10 +65,16 @@ class TypeEnforcer:
                     raise exc.WrongReturnType(data_type, type(data))
                 else:
                     raise exc.WrongParameterType(func_name, parent_variable_name, type(data), data_type)
-            if isinstance(data, typing.Iterable) and not isinstance(data, str):
-                for item in data:
-                    TypeEnforcer.__generic_alias_checker(data_type.__args__[0], item, parent_variable_name, func_name, is_return)
-            if isinstance(data, dict):
+            if isinstance(data, typing.Iterable) and not isinstance(data, str) and not isinstance(data, dict):
+                if len(data_type.__args__) == 1:
+                    for item in data:
+                        TypeEnforcer.__generic_alias_checker(data_type.__args__[0], item, parent_variable_name, func_name, is_return)
+                elif len(data) == len(data_type.__args__):
+                    for dtype, item in zip(data_type.__args__, data):
+                        TypeEnforcer.__generic_alias_checker(dtype, item, parent_variable_name, func_name, is_return)
+                else:
+                    raise AttributeError(f"The argument {parent_variable_name} received a {data_type} of length {len(data)} when it wanted a length of {len(data_type.__args__)}")
+            elif isinstance(data, dict):
                 for key, value in data.items():
                     TypeEnforcer.__generic_alias_checker(data_type.__args__[0], key, parent_variable_name, func_name, is_return)
                     TypeEnforcer.__generic_alias_checker(data_type.__args__[1], value, parent_variable_name, func_name, is_return)
@@ -137,11 +143,11 @@ if __name__ == "__main__":
         pass
 
     @TypeEnforcer.enforcer(recursive=True)
-    def foo(n, h: dict[str,int], v: typing.Callable, f: list[str], x: typing.Any, y: str, z: bool | None=True, a: str="hello") -> list[str]:
+    def foo(n, t: tuple[int, str], h: dict[str,int], v: typing.Callable, f: list[str], x: typing.Any, y: str, z: typing.Optional[bool]=True, a: str="hello") -> list[str]:
         return ["hi"]
 
     def zoo():
         pass
 
-    x = foo(Doof(), {"x":1} , zoo, ['r', 'r'], 1, "hi", z=True)
+    x = foo(Doof(), (2,"hi"), {"x":1} , zoo, ['r', 'r'], 1, "hi", z=None)
     print(x)
