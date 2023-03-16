@@ -11,7 +11,10 @@ except:
 class TypeEnforcer:
     __allowed_for_recursive_checking: list = [dict, list, set, tuple]
     @staticmethod
-    def __check_args(hints: dict, args: tuple, func: typing.Callable, recursive: bool) -> None:
+    def __check_args(hints: dict, args: dict, func: typing.Callable, recursive: bool, return_check: bool=False) -> None:
+        """
+        oh goodness
+        """
         for argument_name, argument in args.items():
             received_type = type(argument)
             expected_type = hints[argument_name]
@@ -20,13 +23,29 @@ class TypeEnforcer:
                     continue
             except TypeError:
                 pass
-            if recursive and type(expected_type) == types.GenericAlias:
-                TypeEnforcer.__generic_alias_checker(expected_type, argument, argument_name, func.__name__)
+            print(type(expected_type))
+            if recursive and type(expected_type) == types.UnionType:
+                type_origins_union = [expected for expected in typing.get_args(expected_type) if type(expected) == types.GenericAlias and received_type == expected.__origin__]
+                if not type_origins_union and not return_check:
+                    raise exc.WrongParameterType(func.__name__,argument_name,received_type,expected_type)
+                elif not type_origins_union:
+                    raise exc.WrongReturnType(expected_type, received_type)
+                elif len(type_origins_union) == 1:
+                    TypeEnforcer.__generic_alias_checker(type_origins_union[0], argument, argument_name, func.__name__, is_return=return_check)
+                else: # MIGRATE TO THE RECURSIVE TYPE CHECKER FUNCTION
+                    fail_count
+                    for expected in type_origins_union:
+
+
+            elif recursive and type(expected_type) == types.GenericAlias:
+                TypeEnforcer.__generic_alias_checker(expected_type, argument, argument_name, func.__name__, is_return=return_check)
             elif (received_type != expected_type 
                 and received_type not in typing.get_args(expected_type)
                 and expected_type != typing.Any
                 ):
-                raise exc.WrongParameterType(func.__name__,argument_name,received_type,expected_type)
+                if not return_check:
+                    raise exc.WrongParameterType(func.__name__,argument_name,received_type,expected_type)
+                raise exc.WrongReturnType(expected_type, received_type)
 
     @staticmethod
     def __combine_args_kwargs(args: tuple, kwargs: dict, func: typing.Callable) -> dict:
@@ -58,7 +77,8 @@ class TypeEnforcer:
         return complete_hints, return_type
     
     @staticmethod
-    def __generic_alias_checker(data_type: types.GenericAlias, data: typing.Any, parent_variable_name: str, func_name: str, is_return: bool=False):
+    def __generic_alias_checker(data_type: types.GenericAlias | types.UnionType, data: typing.Any, parent_variable_name: str, func_name: str, is_return: bool=False):
+        # PUT THE UNION TYPE ANALYSIS HERE
         if type(data_type) == types.GenericAlias:
             if type(data) != data_type.__origin__:
                 if is_return:
@@ -123,13 +143,14 @@ class TypeEnforcer:
                 TypeEnforcer.__check_args(hints, concat_args, func, recursive=recursive)
 
                 return_value = func(*args, **kwargs)
-                if return_type != typing.Any:
-                    print("RETURN")
-                    if type(return_type) == types.GenericAlias:
-                        print("running check")
-                        TypeEnforcer.__generic_alias_checker(return_type, return_value, 'return', func.__name__, is_return=True)
-                    elif type(return_value) != return_type and return_type not in typing.get_args(return_type) and return_type != typing.Any:
-                        raise exc.WrongReturnType(return_type, type(return_value))
+                TypeEnforcer.__check_args({'return':return_type}, {'return':return_value}, func, recursive=recursive, return_check=True)
+                # if return_type != typing.Any:
+                #     print("RETURN")
+                #     if type(return_type) == types.GenericAlias:
+                #         print("running check")
+                #         TypeEnforcer.__generic_alias_checker(return_type, return_value, 'return', func.__name__, is_return=True)
+                #     elif type(return_value) != return_type and return_type not in typing.get_args(return_type) and return_type != typing.Any:
+                #         raise exc.WrongReturnType(return_type, type(return_value))
                 return return_value
             return inner
         return enforcement
@@ -146,8 +167,20 @@ if __name__ == "__main__":
     def foo(n, t: tuple[int, str], h: dict[str,int], v: typing.Callable, f: list[str], x: typing.Any, y: str, z: typing.Optional[bool]=True, a: str="hello") -> list[str]:
         return ["hi"]
 
+    class zeug:
+        @TypeEnforcer.enforcer(recursive=True)
+        def __init__(self, x: tuple[int, str]):
+            pass
+
+        @TypeEnforcer.enforcer(recursive=True)
+        def ziggle(self, x: dict) -> tuple[str, int, str, tuple[int, str]] | dict:
+            return ("he", 1, "ho", (1, "ze"))
+
     def zoo():
         pass
 
     x = foo(Doof(), (2,"hi"), {"x":1} , zoo, ['r', 'r'], 1, "hi", z=None)
     print(x)
+
+    z = zeug((1, ""))
+    z.ziggle({1:2})
