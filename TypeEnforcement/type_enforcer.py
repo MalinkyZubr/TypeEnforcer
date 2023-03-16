@@ -23,7 +23,6 @@ class TypeEnforcer:
                     continue
             except TypeError:
                 pass
-            print(type(expected_type))
             if received_type in typing.get_args(expected_type) or expected_type == typing.Any:
                 continue
             elif recursive and type(expected_type) == types.UnionType:
@@ -106,7 +105,6 @@ class TypeEnforcer:
                     TypeEnforcer.__generic_alias_checker(data_type.__args__[0], parent_data_type, index, parent_variable_name, func_name, is_return, previous_index=previous_index+f"[{index}]")
                     TypeEnforcer.__generic_alias_checker(data_type.__args__[1], parent_data_type, value, parent_variable_name, func_name, is_return, previous_index=previous_index+f"[{index}]")
         elif data_type != type(data) and data_type != typing.Any:
-            print("FUCKED HERE")
             if is_return:
                 raise exc.WrongReturnType(f'{data_type} nested inside {parent_variable_name}', type(data), position=f"{previous_index} in {parent_data_type}")
             else:
