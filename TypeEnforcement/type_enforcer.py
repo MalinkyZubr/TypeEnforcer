@@ -30,7 +30,7 @@ class TypeEnforcer:
                 if not type_origins_union and not return_check:
                     raise exc.WrongParameterType(func.__name__,argument_name,received_type,expected_type)
                 elif not type_origins_union:
-                    raise exc.WrongReturnType(expected_type, received_type)
+                    raise exc.WrongReturnType(expected_type, received_type, func.__name__)
                 elif len(type_origins_union) == 1:
                     TypeEnforcer.__generic_alias_checker(type_origins_union[0], type_origins_union[0], argument, argument_name, func.__name__, is_return=return_check)
                 else: # MIGRATE TO THE RECURSIVE TYPE CHECKER FUNCTION
@@ -42,7 +42,7 @@ class TypeEnforcer:
                         except (exc.WrongParameterType, exc.WrongReturnType,):
                             fail_count += 1
                         if fail_count == len(type_origins_union) and return_check:
-                            raise exc.WrongReturnType(expected_return_type=expected_type, actual_return_type=received_type)
+                            raise exc.WrongReturnType(expected_return_type=expected_type, actual_return_type=received_type, func_name=func.__name__)
                         elif fail_count == len(type_origins_union) and not return_check:
                             raise exc.WrongParameterType(function_name=func.__name__, parameter_name=argument_name,received_type=received_type, expected_type=expected_type)
 
@@ -51,7 +51,7 @@ class TypeEnforcer:
             elif (received_type != expected_type):
                 if not return_check:
                     raise exc.WrongParameterType(func.__name__,argument_name,received_type,expected_type)
-                raise exc.WrongReturnType(expected_type, received_type)
+                raise exc.WrongReturnType(expected_type, received_type, func.__name__)
 
     @staticmethod
     def __combine_args_kwargs(args: tuple, kwargs: dict, func: typing.Callable) -> dict:
@@ -87,7 +87,7 @@ class TypeEnforcer:
         if type(data_type) == types.GenericAlias:
             if type(data) != data_type.__origin__:
                 if is_return:
-                    raise exc.WrongReturnType(data_type, type(data))
+                    raise exc.WrongReturnType(data_type, type(data), func_name)
                 else:
                     raise exc.WrongParameterType(func_name, parent_variable_name, type(data), data_type)
             if isinstance(data, typing.Iterable) and not isinstance(data, str) and not isinstance(data, dict):
@@ -99,14 +99,14 @@ class TypeEnforcer:
                         dtype, item = dtype_item_tup
                         TypeEnforcer.__generic_alias_checker(dtype, parent_data_type, item, parent_variable_name, func_name, is_return, previous_index=previous_index+f"[{index}]")
                 else:
-                    raise AttributeError(f"The argument {parent_variable_name} received a {data_type} of length {len(data)} when it wanted a length of {len(data_type.__args__)}")
+                    raise AttributeError(f"The argument {parent_variable_name} in the function {func_name} received a {data_type} of length {len(data)} when it wanted a length of {len(data_type.__args__)}")
             elif isinstance(data, dict):
                 for index, value in data.items():
                     TypeEnforcer.__generic_alias_checker(data_type.__args__[0], parent_data_type, index, parent_variable_name, func_name, is_return, previous_index=previous_index+f"[{index}]")
                     TypeEnforcer.__generic_alias_checker(data_type.__args__[1], parent_data_type, value, parent_variable_name, func_name, is_return, previous_index=previous_index+f"[{index}]")
         elif data_type != type(data) and data_type != typing.Any:
             if is_return:
-                raise exc.WrongReturnType(f'{data_type} nested inside {parent_variable_name}', type(data), position=f"{previous_index} in {parent_data_type}")
+                raise exc.WrongReturnType(f'{data_type} nested inside {parent_variable_name}, ', type(data), position=f"{previous_index} in {parent_data_type}", func_name=func_name)
             else:
                 raise exc.WrongParameterType(func_name, f"Nested variable in {parent_variable_name}", type(data), data_type, position=f"{previous_index} in {parent_data_type}")
 

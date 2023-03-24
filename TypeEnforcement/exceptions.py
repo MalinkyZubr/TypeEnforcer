@@ -13,8 +13,8 @@ class WrongReturnType(TypeError):
     """
     Raise exception when a function returns unexpected value
     """
-    def __init__(self, expected_return_type: str, actual_return_type: str, position=None):
-        message = f"Function returned a {actual_return_type}, expected a(n) {expected_return_type}"
+    def __init__(self, expected_return_type: str, actual_return_type: str, func_name: str, position=None):
+        message = f"Function {func_name} returned a {actual_return_type}, expected a(n) {expected_return_type}"
         if position:
             message = f"At position {position} " + message 
         super().__init__(message)
