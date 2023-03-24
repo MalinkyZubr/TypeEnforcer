@@ -57,7 +57,7 @@ class TypeEnforcer:
     def __combine_args_kwargs(args: tuple, kwargs: dict, func: typing.Callable) -> dict:
         args_limit = len(args)
         args_dict: dict = {}
-        for index, arg_name in list(enumerate(func.__code__.co_varnames))[:args_limit]:
+        for index, arg_name in list(enumerate(func.__code__.co_varnames[:func.__code__.co_argcount]))[:args_limit]:
             args_dict.update({arg_name:args[index]})
         args_dict.update(kwargs)
 
@@ -173,6 +173,8 @@ if __name__ == "__main__":
 
         @TypeEnforcer.enforcer(recursive=True)
         def ziggle(self, x: dict) -> tuple[str, int, str, tuple[int, str]] | dict[str,str]:
+            zeugma = 'asdjfljkf'
+            largo = "hehehehhehhee"
             return {"":""}#("he", 1, "ho", (1, "2"))
 
     def zoo():
